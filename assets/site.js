@@ -71,11 +71,37 @@
     });
   }
 
+  function setupAutoHideCTA(){
+    const cta = document.getElementById('next-cta');
+    if(!cta) return;
+    let hideTimer = null;
+    const HIDE_MS = 9000;
+
+    function startTimer(){
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(()=>{ cta.classList.add('hidden'); }, HIDE_MS);
+    }
+
+    function stopTimer(){
+      clearTimeout(hideTimer);
+      cta.classList.remove('hidden');
+    }
+
+    // start timer after page load
+    startTimer();
+    // pause if user hovers
+    cta.addEventListener('mouseenter', stopTimer);
+    cta.addEventListener('mouseleave', startTimer);
+    // if user clicks close (not present by default) or navigates, hide
+    document.addEventListener('visibilitychange', function(){ if(document.hidden) cta.classList.add('hidden'); });
+  }
+
   // Initialize
   document.addEventListener('DOMContentLoaded', function(){
     setupNextCTA();
     attachInternalLinkTracking();
     analyticsInit();
     attachVideoLoader();
+    setupAutoHideCTA();
   });
 })();
