@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Search — WRC Exhibit</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Search</h1>
+  <p>Search the WRC Exhibit</p>
+</header>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="search.html">Search</a>
+  <a href="stages.html">Stages</a>
+  <a href="cars.html">Cars</a>
+</nav>
+
+<section class="search-container">
+  <input id="q" class="search-input" placeholder="Search articles, e.g. 'Monte Carlo'" autofocus>
+  <div id="results" class="search-results"></div>
+</section>
+
+<footer>
+  © 2025 WRC Exhibit
+</footer>
+
+<script src="https://unpkg.com/lunr/lunr.js"></script>
+<script>
+// Small client-side index for the site. Expand entries as your site grows.
+const pages = [
+  { id: 'index', title: 'WRC Exhibit', content: 'What is WRC? The World Rally Championship features snow, gravel, tarmac and extreme conditions.', url: 'index.html' },
+  { id: 'cars', title: 'Legendary WRC Cars', content: 'Audi Sport Quattro, Subaru Impreza, Toyota GR Yaris Rally1 and Group B history.', url: 'cars.html' },
+  { id: 'stages', title: 'WRC Stages', content: 'Monte Carlo tarmac, Rally Finland gravel, Rally Sweden snow.', url: 'stages.html' }
+];
+
+const idx = lunr(function(){
+  this.ref('id');
+  this.field('title');
+  this.field('content');
+  pages.forEach(function(page){ this.add(page); }, this);
+});
+
+function renderResults(results){
+  const out = document.getElementById('results');
+  out.innerHTML = '';
+  if(results.length === 0){ out.innerHTML = '<p class="muted">No results</p>'; return; }
+  results.forEach(r => {
+    const p = pages.find(page => page.id === r.ref);
+    const el = document.createElement('div');
+    el.className = 'search-result';
+    el.innerHTML = '<a href="'+p.url+'">'+p.title+'</a><p>'+p.content.substring(0,140)+'…</p>';
+    out.appendChild(el);
+  });
+}
+
+const input = document.getElementById('q');
+input.addEventListener('input', function(){
+  const q = this.value.trim();
+  if(!q) { document.getElementById('results').innerHTML = ''; return; }
+  const results = idx.search(q + '*');
+  renderResults(results);
+});
+</script>
+
+</body>
+</html>
