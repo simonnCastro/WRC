@@ -45,10 +45,37 @@
     console.info('analytics:initialized', { site: 'WRC Exhibit (placeholder)' });
   }
 
+  // Expose a simple analytics hook so you can plug a real provider later.
+  window.sendAnalytics = function(event){
+    // event: { action: string, ... }
+    // Default: console log. Replace this body to integrate GA/Plausible/etc.
+    console.info('analytics:event', event);
+  };
+
+  function attachVideoLoader(){
+    // Find buttons with data-video-id and load video into nearest iframe when clicked
+    const btn = document.getElementById('load-video-btn');
+    const iframe = document.getElementById('highlight-iframe');
+    if(!btn || !iframe) return;
+    btn.addEventListener('click', function(){
+      const vid = iframe.getAttribute('data-video-id');
+      if(!vid || vid === 'YOUTUBE_VIDEO_ID'){
+        // no real id yet
+        alert('No video ID configured yet. Replace the placeholder in the admin files.');
+        return;
+      }
+      iframe.src = 'https://www.youtube.com/embed/' + vid + '?rel=0&autoplay=1';
+      window.sendAnalytics({ action: 'load_video', video: vid });
+      // hide the button after load
+      btn.style.display = 'none';
+    });
+  }
+
   // Initialize
   document.addEventListener('DOMContentLoaded', function(){
     setupNextCTA();
     attachInternalLinkTracking();
     analyticsInit();
+    attachVideoLoader();
   });
 })();

@@ -29,40 +29,69 @@
 
 <script src="https://unpkg.com/lunr/lunr.js"></script>
 <script>
-// Small client-side index for the site. Expand entries as your site grows.
-const pages = [
-  { id: 'index', title: 'WRC Exhibit', content: 'What is WRC? The World Rally Championship features snow, gravel, tarmac and extreme conditions.', url: 'index.html' },
-  { id: 'cars', title: 'Legendary WRC Cars', content: 'Audi Sport Quattro, Subaru Impreza, Toyota GR Yaris Rally1 and Group B history.', url: 'cars.html' },
-  { id: 'stages', title: 'WRC Stages', content: 'Monte Carlo tarmac, Rally Finland gravel, Rally Sweden snow.', url: 'stages.html' }
-];
+// Build a small index by fetching each page and extracting title/first paragraph.
+const pageFiles = ['index.html','cars.html','stages.html'];
+const pages = [];
 
-const idx = lunr(function(){
-  this.ref('id');
-  this.field('title');
-  this.field('content');
-  pages.forEach(function(page){ this.add(page); }, this);
-});
-
-function renderResults(results){
-  const out = document.getElementById('results');
-  out.innerHTML = '';
-  if(results.length === 0){ out.innerHTML = '<p class="muted">No results</p>'; return; }
-  results.forEach(r => {
-    const p = pages.find(page => page.id === r.ref);
-    const el = document.createElement('div');
-    el.className = 'search-result';
-    el.innerHTML = '<a href="'+p.url+'">'+p.title+'</a><p>'+p.content.substring(0,140)+'…</p>';
-    out.appendChild(el);
-  });
+function extractFromHtml(htmlText, url){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlText, 'text/html');
+  const title = doc.querySelector('h1') ? doc.querySelector('h1').textContent.trim() : doc.title || url;
+  const p = doc.querySelector('section p') ? doc.querySelector('section p').textContent.trim() : '';
+  return { id: url.replace(/\W/g,'_'), title: title, content: p, url: url };
 }
 
-const input = document.getElementById('q');
-input.addEventListener('input', function(){
-  const q = this.value.trim();
-  if(!q) { document.getElementById('results').innerHTML = ''; return; }
-  const results = idx.search(q + '*');
-  renderResults(results);
-});
+async function buildIndex(){
+  const resultsEl = document.getElementById('results');
+  resultsEl.innerHTML = '<p class="muted">Loading search index…</p>';
+  for(const f of pageFiles){
+    try{
+      const resp = await fetch(f);
+      const text = await resp.text();
+      const item = extractFromHtml(text, f);
+      pages.push(item);
+    }catch(e){
+      console.warn('search: failed to fetch', f, e);
+    }
+  }
+
+  // build lunr index
+  const idx = lunr(function(){
+    this.ref('id');
+    this.field('title');
+    this.field('content');
+    pages.forEach(function(page){ this.add(page); }, this);
+  });
+
+  function renderResults(results){
+    const out = document.getElementById('results');
+    out.innerHTML = '';
+    if(results.length === 0){ out.innerHTML = '<p class="muted">No results</p>'; return; }
+    results.forEach(r => {
+      const p = pages.find(page => page.id === r.ref);
+      const el = document.createElement('div');
+      el.className = 'search-result';
+      el.innerHTML = '<a href="'+p.url+'">'+p.title+'</a><p>'+ (p.content ? p.content.substring(0,140) : '') +'…</p>';
+      out.appendChild(el);
+    });
+  }
+
+  const input = document.getElementById('q');
+  input.addEventListener('input', function(){
+    const q = this.value.trim();
+    if(!q) { document.getElementById('results').innerHTML = ''; return; }
+    try{
+      const results = idx.search(q + '*');
+      renderResults(results);
+    }catch(e){
+      console.warn('search query failed', e);
+      document.getElementById('results').innerHTML = '<p class="muted">No results</p>';
+    }
+  });
+  resultsEl.innerHTML = '<p class="muted">Search index ready — enter a query above.</p>';
+}
+
+buildIndex();
 </script>
 
 </body>

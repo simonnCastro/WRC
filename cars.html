@@ -54,10 +54,11 @@
 <section class="media">
   <h2>Watch: Rally Highlight (Placeholder)</h2>
   <div class="video-wrap">
-    <!-- Replace YOUTUBE_VIDEO_ID with a real video ID to embed -->
-    <iframe src="https://www.youtube.com/embed/YOUTUBE_VIDEO_ID" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+    <!-- Replace YOUTUBE_VIDEO_ID with a real video ID to embed. The iframe src is empty until user clicks Load. -->
+    <iframe id="highlight-iframe" data-video-id="YOUTUBE_VIDEO_ID" src="" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
   </div>
-  <p class="muted">Replace <code>YOUTUBE_VIDEO_ID</code> with a real YouTube video ID to show highlights.</p>
+  <p class="muted">Replace <code>YOUTUBE_VIDEO_ID</code> with a real YouTube video ID to show highlights, or click Load highlight to stream it.</p>
+  <div style="margin-top:12px; text-align:center;"><button id="load-video-btn" class="cta-button" type="button">Load highlight</button></div>
 </section>
 
 <!-- Sticky Next-article CTA -->
