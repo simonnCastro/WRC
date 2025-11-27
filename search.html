@@ -29,39 +29,12 @@
 
 <script src="https://unpkg.com/lunr/lunr.js"></script>
 <script>
-// Build a small index by fetching each page and extracting title/first paragraph.
-const pageFiles = ['index.html','cars.html','stages.html'];
+// Try to fetch a prebuilt `search-index.json`. If absent, fall back to building from pages.
 const pages = [];
 
-function extractFromHtml(htmlText, url){
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlText, 'text/html');
-  const title = doc.querySelector('h1') ? doc.querySelector('h1').textContent.trim() : doc.title || url;
-  const p = doc.querySelector('section p') ? doc.querySelector('section p').textContent.trim() : '';
-  return { id: url.replace(/\W/g,'_'), title: title, content: p, url: url };
-}
-
-async function buildIndex(){
-  const resultsEl = document.getElementById('results');
-  resultsEl.innerHTML = '<p class="muted">Loading search index…</p>';
-  for(const f of pageFiles){
-    try{
-      const resp = await fetch(f);
-      const text = await resp.text();
-      const item = extractFromHtml(text, f);
-      pages.push(item);
-    }catch(e){
-      console.warn('search: failed to fetch', f, e);
-    }
-  }
-
-  // build lunr index
-  const idx = lunr(function(){
-    this.ref('id');
-    this.field('title');
-    this.field('content');
-    pages.forEach(function(page){ this.add(page); }, this);
-  });
+function buildFromIndexJson(data){
+  const pages = data;
+  const idx = lunr(function(){ this.ref('id'); this.field('title'); this.field('content'); pages.forEach(function(page){ this.add(page); }, this); });
 
   function renderResults(results){
     const out = document.getElementById('results');
@@ -80,18 +53,40 @@ async function buildIndex(){
   input.addEventListener('input', function(){
     const q = this.value.trim();
     if(!q) { document.getElementById('results').innerHTML = ''; return; }
-    try{
-      const results = idx.search(q + '*');
-      renderResults(results);
-    }catch(e){
-      console.warn('search query failed', e);
-      document.getElementById('results').innerHTML = '<p class="muted">No results</p>';
-    }
+    try{ const results = idx.search(q + '*'); renderResults(results); }catch(e){ console.warn('search query failed', e); document.getElementById('results').innerHTML = '<p class="muted">No results</p>'; }
   });
-  resultsEl.innerHTML = '<p class="muted">Search index ready — enter a query above.</p>';
+  document.getElementById('results').innerHTML = '<p class="muted">Search index ready — enter a query above.</p>';
 }
 
-buildIndex();
+async function initSearch(){
+  const out = document.getElementById('results');
+  out.innerHTML = '<p class="muted">Loading search index…</p>';
+  try{
+    const resp = await fetch('search-index.json');
+    if(resp.ok){
+      const data = await resp.json();
+      buildFromIndexJson(data);
+      return;
+    }
+  }catch(e){ /* continue to fallback */ }
+
+  // fallback: build from pages (previous approach)
+  const pageFiles = ['index.html','cars.html','stages.html'];
+  const extracted = [];
+  function extractFromHtml(htmlText, url){
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlText, 'text/html');
+    const title = doc.querySelector('h1') ? doc.querySelector('h1').textContent.trim() : doc.title || url;
+    const p = doc.querySelector('section p') ? doc.querySelector('section p').textContent.trim() : '';
+    return { id: url.replace(/\W/g,'_'), title: title, content: p, url: url };
+  }
+  for(const f of pageFiles){
+    try{ const r = await fetch(f); const t = await r.text(); extracted.push(extractFromHtml(t,f)); }catch(e){ console.warn('search: failed to fetch', f, e); }
+  }
+  buildFromIndexJson(extracted);
+}
+
+initSearch();
 </script>
 
 </body>

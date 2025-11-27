@@ -1,0 +1,20 @@
+[
+  {
+    "id": "cars_html",
+    "title": "Legendary WRC Cars",
+    "content": "A Group B monster with turbo power and quattro AWD. Transformed rallying forever.",
+    "url": "cars.html"
+  },
+  {
+    "id": "index_html",
+    "title": "WRC Exhibit",
+    "content": "The World Rally Championship features the toughest motorsport challenges in the world:\n    snow, gravel, tarmac, and extreme conditions that push drivers and machines to the limit.",
+    "url": "index.html"
+  },
+  {
+    "id": "stages_html",
+    "title": "WRC Stages",
+    "content": "Famous for unpredictable grip, changing weather, and tight mountain passes.",
+    "url": "stages.html"
+  }
+]

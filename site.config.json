@@ -1,0 +1,7 @@
+{
+  "youtubeVideoId": "",
+  "analytics": {
+    "provider": "", // "ga" or "plausible" or empty
+    "id": "" // Measurement ID (GA) or site ID (Plausible)
+  }
+}

@@ -98,10 +98,51 @@
 
   // Initialize
   document.addEventListener('DOMContentLoaded', function(){
-    setupNextCTA();
-    attachInternalLinkTracking();
-    analyticsInit();
-    attachVideoLoader();
-    setupAutoHideCTA();
+    // Load site config (optional) to set video id and analytics provider
+    fetch('site.config.json').then(r => r.json()).then(cfg => {
+      try{
+        if(cfg && cfg.youtubeVideoId){
+          const iframe = document.getElementById('highlight-iframe');
+          if(iframe) iframe.setAttribute('data-video-id', cfg.youtubeVideoId);
+        }
+        // Inject analytics provider if configured
+        if(cfg && cfg.analytics && cfg.analytics.provider && cfg.analytics.id){
+          const prov = cfg.analytics.provider.toLowerCase();
+          const id = cfg.analytics.id;
+          if(prov === 'ga'){
+            // GA4 snippet
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){ dataLayer.push(arguments); }
+            window.gtag = gtag;
+            const s = document.createElement('script');
+            s.async = true;
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+            document.head.appendChild(s);
+            gtag('js', new Date());
+            gtag('config', id);
+            // forward sendAnalytics to gtag
+            window.sendAnalytics = function(event){
+              if(window.gtag) window.gtag('event', event.action || 'event', event);
+            };
+          }else if(prov === 'plausible'){
+            // plausible
+            const s = document.createElement('script');
+            s.defer = true;
+            s.setAttribute('data-domain', id);
+            s.src = 'https://plausible.io/js/plausible.js';
+            document.head.appendChild(s);
+            window.sendAnalytics = function(event){
+              if(window.plausible) window.plausible(event.action || 'event');
+            };
+          }
+        }
+      }catch(e){ console.warn('site config parse failed', e); }
+    }).catch(()=>{/* no config, ok */}).finally(()=>{
+      setupNextCTA();
+      attachInternalLinkTracking();
+      analyticsInit();
+      attachVideoLoader();
+      setupAutoHideCTA();
+    });
   });
 })();
