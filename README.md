@@ -13,7 +13,7 @@ What's included
 Quick setup
 1. Install Node (to run the build script) if you don't already have it.
 2. Regenerate the search index after adding pages:
-
+ - Regenerate the search index after adding pages:
 ```bash
 node scripts/build-search-index.js
 git add search-index.json && git commit -m "chore: update search index" && git push
@@ -30,6 +30,9 @@ Enable analytics
 Extending search
 - The build script currently scans `.html` files in the repo root. To index subdirectories or change behavior, edit `scripts/build-search-index.js`.
 - For larger sites, generate a JSON index during your CI/build step and commit `search-index.json` or serve it from your web host.
+
+CI automation
+- A GitHub Actions workflow `.github/workflows/build-search-index.yml` is included; it runs the index builder on `main` and commits `search-index.json` when it changes. This automates keeping the search index up-to-date.
 
 Next recommended steps
 - Replace placeholders in `site.config.json` for video and analytics.
